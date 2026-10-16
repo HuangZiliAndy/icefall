@@ -1,0 +1,75 @@
+# cfg39 (fine-tuning, base_lr 0.01 for all): = cfg36 but the encoder is initialised from
+# SSL cfg9 (= SSL cfg8 without bi-label: AMI x5, single label head),
+# averaged over epochs 75-84.
+#
+#   python zipformer/train.py --config conf/cfg39.yaml
+#
+# Command-line options override values here. The fully resolved options are
+# written to <exp_dir>/config.yaml when training starts.
+
+# ---- experiment ----
+exp_dir: exp/cfg39
+world_size: 1
+master_port: 12354
+num_epochs: 50
+init_encoder: /workspace/workspace/icefall/egs/librispeech/SSL/zipformer_causal_fbank/exp/cfg9/epoch-84-avg-10.pt
+start_epoch: 1
+seed: 42
+use_fp16: true
+
+# ---- data ----
+bpe_model: data/lang_bpe_500/bpe.model   # includes <cc> (id 3)
+manifest_dir: data/fbank
+max_duration: 1500        # per GPU; 1800 OOMs on 32 GB, 1500 leaves ~8 GB headroom
+num_workers: 4
+enable_musan: true
+enable_spec_aug: true
+
+# ---- model: zipformer medium (librispeech defaults, ~66M params) ----
+num_encoder_layers: [2, 2, 3, 4, 3, 2]
+downsampling_factor: [1, 2, 4, 8, 4, 2]
+encoder_dim: [192, 256, 384, 512, 384, 256]
+feedforward_dim: [512, 768, 1024, 1536, 1024, 768]
+num_heads: [4, 4, 4, 8, 4, 4]
+encoder_unmasked_dim: [192, 192, 256, 256, 256, 192]
+cnn_module_kernel: [31, 31, 15, 15, 15, 31]
+query_head_dim: 32
+value_head_dim: 12
+pos_head_dim: 4
+pos_dim: 48
+decoder_dim: 512
+joiner_dim: 512
+context_size: 2
+
+# ---- streaming ----
+causal: true
+chunk_size: [16, 32, 64, -1]           # frames at 50 Hz, sampled per batch
+left_context_frames: [64, 128, 256, -1]
+
+# ---- loss: pruned RNN-T only ----
+use_transducer: true
+use_ctc: false
+use_attention_decoder: false
+prune_range: 5
+lm_scale: 0.25
+am_scale: 0.0
+simple_loss_scale: 0.5
+
+# ---- optimisation ----
+# lr_batches / warm_step / valid_interval count raw batches. The librispeech
+# streaming recipe (4 GPUs x 1000 s, ~2.6k batches/epoch, 40 epochs ~ 104k
+# batches) uses 7500 / 2000 / 3000. Here 1 GPU x 1500 s gives 468 batches/epoch
+# (~23.4k batches in 50 epochs), so lr_batches and warm_step keep the same
+# fraction of total batches (7.2% / 1.9%) and validation runs about once per epoch.
+base_lr: 0.01
+lr_batches: 1700
+lr_epochs: 3.5          # librispeech default; the epoch term does not depend on #GPUs or batch size
+warm_step: 450
+valid_interval: 470
+ref_duration: 600
+
+# ---- checkpoints ----
+# keep epoch-10/20/30/40/50.pt (+ the latest one while training) and best-*.pt;
+# decoding with --epoch 50 --avg 10 --use-averaged-model 1 needs epoch-40/50.pt
+save_epoch_every: 10
+save_best_checkpoints: true

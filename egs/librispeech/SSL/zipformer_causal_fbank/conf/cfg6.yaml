@@ -1,0 +1,88 @@
+# cfg6: = cfg5 with base_lr 0.03 (LR scan 0.1 / 0.03).
+# cfg5: = cfg3 + bi-label training + mixing none/noise/speech = 0.5/0.1/0.4
+# (cfg3: 0.8/0.1/0.1). Bi-label: besides the primary utterance's labels,
+# a second head predicts the labels of the secondary (mixed-in) utterance, and
+# SIL where there is none (see zipformer/ssl_model.py). cfg3 = WavLM-style
+# pre-training (noisy/overlapped speech simulation), 4 GPUs x 1400 s,
+# base_lr 0.1, 100 epochs, streaming (causal) medium Zipformer on 80-dim fbank,
+# WavLM Base+ layer-9 k-means (500) targets, LibriSpeech 960 h + AMI IHM.
+#
+#   python zipformer/pretrain.py --config conf/cfg6.yaml
+#
+# Command-line options override values here. The fully resolved options are
+# written to <exp_dir>/config.yaml when training starts.
+
+# ---- experiment ----
+exp_dir: exp/cfg6
+world_size: 4
+master_port: 12359
+num_epochs: 100         # shortened from 300 (k2SSL) for faster iteration
+start_epoch: 1
+seed: 42
+use_fp16: true
+
+# ---- data ----
+manifest_dir: data/manifests
+max_duration: 1400        # per GPU, total duration before cropping; 2-GPU test: peak
+                          # 19.6 GB allocated / 29.2 GB in nvidia-smi on 32 GB (1800 near full, 2200 OOM)
+max_sample_size: 250000   # crop to <= 15.6 s (HuBERT / k2SSL)
+min_keep_duration: 1.0    # k2SSL drops < 2 s; keep all (AMI pieces are >= 1 s)
+num_buckets: 30
+num_workers: 8
+# WavLM noisy/overlapped speech simulation (arXiv:2110.13900, Alg. 1) on the
+# cropped training waveforms; labels stay those of the clean utterance.
+mix_noise_prob: 0.1       # DNS noise, energy ratio U(-5, 20) dB
+mix_speech_prob: 0.4      # another utterance of the batch (not itself), U(-5, 5) dB;
+                          # 0.4 (cfg3: 0.1): downstream t-SOT train data is 65% 2-speaker
+                          # groups, and more secondary-speech frames for bi-label (~10%)
+noise_list: data/noise/dns_noise.tsv   # DNS Challenge 3 noise, 65,302 clips, 180.5 h
+
+# ---- model: zipformer medium encoder, identical to egs/ami/TSOT (~66M params) ----
+num_encoder_layers: [2, 2, 3, 4, 3, 2]
+downsampling_factor: [1, 2, 4, 8, 4, 2]
+encoder_dim: [192, 256, 384, 512, 384, 256]
+feedforward_dim: [512, 768, 1024, 1536, 1024, 768]
+num_heads: [4, 4, 4, 8, 4, 4]
+encoder_unmasked_dim: [192, 192, 256, 256, 256, 192]
+cnn_module_kernel: [31, 31, 15, 15, 15, 31]
+query_head_dim: 32
+value_head_dim: 12
+pos_head_dim: 4
+pos_dim: 48
+
+# ---- streaming ----
+causal: true
+chunk_size: [16, 32, 64, -1]           # frames at 50 Hz, sampled per batch
+left_context_frames: [64, 128, 256, -1]
+
+# ---- SSL: masked prediction (k2SSL / HuBERT defaults) ----
+num_classes: 500
+label_shift: 2            # encoder_embed frame j predicts WavLM label j+2
+mask_prob: 0.8
+mask_length: 10
+logit_temp: 0.1
+# bi-label: secondary labels inside the mixed-in region, SIL (class 500)
+# elsewhere, on all utterances; loss = primary CE + sec_loss_scale * secondary CE.
+# Mixing positions are multiples of 320 samples; validation also runs on mixed
+# copies of the dev sets (<set>_mix).
+bi_label: true
+sec_loss_scale: 1.0
+
+# ---- optimisation ----
+# k2SSL (300 epochs): base_lr 0.045, lr_batches 7500, lr_epochs 10.5,
+# warmup_batches 5000. For 100 epochs the step/epoch constants are scaled by
+# 1/3, so the LR curve keeps its shape (peak ~0.85 x base_lr at epoch ~3,
+# 0.036 x base_lr at the end). ~687 steps/epoch -> ~68.7k steps in total.
+base_lr: 0.03
+lr_batches: 2500
+lr_epochs: 3.5
+warmup_batches: 1667
+warmup_start: 0.0
+ref_duration: 600
+valid_interval: 3000
+
+# ---- checkpoints ----
+save_every_n: 0           # no step-based checkpoint-N.pt; only epoch checkpoints
+average_period: 200
+save_epoch_every: 10
+save_best_checkpoints: true

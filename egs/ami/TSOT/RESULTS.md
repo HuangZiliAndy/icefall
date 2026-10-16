@@ -226,17 +226,12 @@ single-latency 2spk differences of 1-2 points, should not be trusted.
   underfits; the split learning rate is the most stable and is best or on
   par for every SSL model.
 
-Fine-tuning and decoding command (best model, cfg35, 320ms):
+Commands (best model):
 
 ```bash
-./zipformer/train.py --config conf/cfg35.yaml
-./zipformer/decode.py --train-config exp/cfg35/config.yaml \
-  --epoch 50 --avg 10 --use-averaged-model 1 \
-  --chunk-size 16 --left-context-frames 128 \
-  --decoding-method modified_beam_search --beam-size 4 \
-  --max-duration 300 --test-sets test_1spk,test_2spk
-python local/score_cpwer.py --exp-dirs exp/cfg35 --sets test_1spk test_2spk
+# egs/librispeech/SSL/zipformer_causal_fbank
+./run_pretrain.sh 8 0,1,2,3    # -> exp/cfg8/epoch-84-avg-10.pt
+# egs/ami/TSOT
+./run_finetune.sh 35 0         # init_encoder: SSL exp/cfg8/epoch-84-avg-10.pt
+./decode.sh 35 0               # 4 latencies, cpWER -> exp/cfg35/cpwer.tsv
 ```
-
-`init_encoder` in the fine-tuning configs points to the averaged SSL
-checkpoint, e.g. `exp/cfg8/epoch-84-avg-10.pt` of the SSL recipe.

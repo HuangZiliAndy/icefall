@@ -14,8 +14,8 @@ Also writes a fairseq-style list (first line: root, then
 
 Usage:
   python local/prepare_dns_noise.py \
-      --in-dir /workspace/dataset/DNS_Challenge_3/datasets/noise \
-      --out-dir /workspace/dataset/DNS_Challenge_3/noise_16k \
+      --in-dir download/DNS_Challenge_3/datasets/noise \
+      --out-dir download/DNS_Challenge_3/noise_16k \
       --list data/noise/dns_noise.tsv
 """
 import argparse

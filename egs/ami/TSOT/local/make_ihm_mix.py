@@ -12,8 +12,8 @@ length, and writes <out-dir>/<M>.wav = clip(gain * sum) as 16 kHz mono PCM_16.
 The number of clipped samples is logged.
 
 Usage:
-  python local/make_ihm_mix.py --ami-dir /workspace/dataset/AMI \
-      --out-dir /workspace/dataset/AMI_IHM_MIX --nj 32
+  python local/make_ihm_mix.py --ami-dir download/AMI \
+      --out-dir download/AMI_IHM_MIX --nj 32
 """
 import argparse
 import logging

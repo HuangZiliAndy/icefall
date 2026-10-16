@@ -24,8 +24,8 @@ import soundfile as sf
 
 def get_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--librispeech-dir", type=Path, default=Path("/workspace/dataset/LibriSpeech_wav"))
-    p.add_argument("--ami-dir", type=Path, default=Path("/workspace/dataset/AMI_IHM_nonoverlap"))
+    p.add_argument("--librispeech-dir", type=Path, required=True)
+    p.add_argument("--ami-dir", type=Path, required=True)
     p.add_argument("--ls-fraction", type=float, default=90 / 960)
     p.add_argument("--ami-fraction", type=float, default=1 / 5)
     p.add_argument("--out-dir", type=Path, required=True)

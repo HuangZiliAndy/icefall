@@ -47,14 +47,14 @@ Output per split (<out-dir>/<split>/):
 
 Usage:
   python local/prepare_utt_groups.py \
-      --annotations-dir /workspace/dataset/AMI/ami_public_manual_1.6.2 \
-      --audio-dir /workspace/dataset/AMI_IHM_MIX_OFFICIAL \
+      --annotations-dir download/AMI/ami_public_manual_1.6.2 \
+      --audio-dir download/AMI_IHM_MIX_OFFICIAL \
       --wav-template "{meeting}.Mix-Headset.wav" \
       --out-dir data/ihm_mix_utterance_group --splits train dev \
       --max-dur 25 --max-speakers 2 --max-cut-level 3
   python local/prepare_utt_groups.py \
-      --annotations-dir /workspace/dataset/AMI/ami_public_manual_1.6.2 \
-      --audio-dir /workspace/dataset/AMI_IHM_MIX_OFFICIAL \
+      --annotations-dir download/AMI/ami_public_manual_1.6.2 \
+      --audio-dir download/AMI_IHM_MIX_OFFICIAL \
       --wav-template "{meeting}.Mix-Headset.wav" \
       --out-dir data/ihm_mix_utterance_group --splits test --max-dur 0
 """

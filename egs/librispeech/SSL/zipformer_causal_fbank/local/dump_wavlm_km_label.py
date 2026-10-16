@@ -21,6 +21,7 @@ Usage:
 """
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -29,7 +30,9 @@ import numpy as np
 import soundfile as sf
 import torch
 
-sys.path.insert(0, "/workspace/models/wavlm/unilm_wavlm")
+# WavLM.py + modules.py from https://github.com/microsoft/unilm/tree/master/wavlm
+# (commit 1ad6ea07df17b3e5c4c5d851f98721ecc43cf593); WAVLM_DIR = that directory
+sys.path.insert(0, os.environ.get("WAVLM_DIR", "download/unilm/wavlm"))
 from WavLM import WavLM, WavLMConfig  # noqa: E402
 
 torch.set_num_threads(2)

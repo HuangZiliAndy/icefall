@@ -15,7 +15,7 @@ exp_dir: exp/cfg25
 world_size: 1
 master_port: 12354
 num_epochs: 50
-init_encoder: /workspace/workspace/icefall/egs/librispeech/SSL/zipformer_causal_fbank/exp/cfg5/epoch-100-avg-10.pt
+init_encoder: ../../librispeech/SSL/zipformer_causal_fbank/exp/cfg5/epoch-100-avg-10.pt
 start_epoch: 1
 seed: 42
 use_fp16: true

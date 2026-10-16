@@ -18,8 +18,8 @@ import soundfile as sf
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--librispeech-dir", type=Path, default=Path("/workspace/dataset/LibriSpeech_wav"))
-    p.add_argument("--ami-dir", type=Path, default=Path("/workspace/dataset/AMI_IHM_nonoverlap"))
+    p.add_argument("--librispeech-dir", type=Path, required=True)
+    p.add_argument("--ami-dir", type=Path, required=True)
     p.add_argument("--out-dir", type=Path, required=True)
     args = p.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
